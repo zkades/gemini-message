@@ -1,0 +1,9 @@
+{
+  "name": "Gemini Messages",
+  "description": "A Google Messages clone featuring AI-powered Magic Compose, high-fidelity Material Design 3 styling, and smooth mobile-first interactions.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
