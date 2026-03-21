@@ -3,7 +3,6 @@
   "appId": "com.google.messages.clone",
   "appName": "Messages",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
     "cleartext": true
