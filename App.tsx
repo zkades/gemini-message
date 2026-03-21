@@ -19,6 +19,8 @@ import {
   User
 } from './firebase';
 import { Conversation, Message, View, Contact, UserAccount } from './types';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Preferences } from '@capacitor/preferences';
 import ConversationList from './components/ConversationList';
 import ChatView from './components/ChatView';
 import NewChatView from './components/NewChatView';
@@ -436,6 +438,147 @@ const App: React.FC = () => {
 
     return () => clearInterval(id);
   }, [user, db, handleImportOldMessages]);
+
+  // CBE Message Handler - Check for broadcast notifications
+  useEffect(() => {
+    const checkCbeMessages = async () => {
+      try {
+        // Check for pending notifications
+        const { value: pendingNotification } = await Preferences.get({ key: 'pending_notification' });
+        const { value: notificationTime } = await Preferences.get({ key: 'notification_time' });
+        
+        if (pendingNotification && notificationTime) {
+          const timeDiff = Date.now() - parseInt(notificationTime);
+          
+          // Only show if notification is recent (within 5 seconds)
+          if (timeDiff < 5000) {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  id: Date.now(),
+                  title: 'CBE',
+                  body: pendingNotification,
+                  schedule: { at: new Date() },
+                  sound: 'default'
+                }
+              ]
+            });
+            
+            console.log('CBE notification displayed:', pendingNotification);
+            
+            // Clear pending notification
+            await Preferences.remove({ key: 'pending_notification' });
+            await Preferences.remove({ key: 'notification_time' });
+          }
+        }
+        
+        // Check for unprocessed CBE messages
+        const { value: cbeMessages } = await Preferences.get({ key: 'messages' });
+        
+        if (cbeMessages && cbeMessages !== '[]') {
+          const messages = JSON.parse(cbeMessages);
+          const unprocessedMessages = messages.filter((msg: any) => !msg.processed);
+          
+          for (const message of unprocessedMessages) {
+            // Check if this transaction already exists in Firestore
+            const existingTransaction = await checkDuplicateTransaction(message.refNo || message.id);
+            
+            if (!existingTransaction) {
+              await handleCbeMessage(message);
+              
+              // Mark as processed
+              message.processed = true;
+            } else {
+              console.log('Duplicate CBE transaction detected, skipping:', message.refNo);
+              message.processed = true; // Mark as processed to avoid rechecking
+            }
+          }
+          
+          // Update processed messages
+          await Preferences.set({
+            key: 'messages',
+            value: JSON.stringify(messages)
+          });
+        }
+      } catch (error) {
+        console.error('Error checking CBE messages:', error);
+      }
+    };
+
+    // Check immediately on app start
+    checkCbeMessages();
+    
+    // Set up periodic checking
+    const interval = setInterval(checkCbeMessages, 2000);
+    
+    return () => clearInterval(interval);
+  }, [user, db]);
+
+  const checkDuplicateTransaction = async (refNo: string) => {
+    if (!user || !db || !refNo) return false;
+    
+    try {
+      // For mock Firebase, check localStorage directly
+      const existingData = localStorage.getItem(`users_${user.uid}_conversations_CBE_NOTIFICATIONS_messages`);
+      if (existingData) {
+        const messages = JSON.parse(existingData);
+        return messages.some((msg: any) => 
+          msg.transactionData && msg.transactionData.refNo === refNo
+        );
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking duplicate transaction:', error);
+      return false;
+    }
+  };
+
+  const handleCbeMessage = async (cbeMessage: any) => {
+    if (!user || !db) return;
+    
+    const cbeConversationId = 'CBE_NOTIFICATIONS';
+    const convRef = doc(db, 'users', user.uid, 'conversations', cbeConversationId);
+    const msgsRef = collection(db, 'users', user.uid, 'conversations', cbeConversationId, 'messages');
+    
+    // Create CBE conversation if it doesn't exist
+    const cbeConv = {
+      id: cbeConversationId,
+      name: 'CBE',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=cbe&backgroundColor=FF6B35',
+      lastMessage: `ETB ${cbeMessage.amount}`,
+      lastMessageTime: new Date(cbeMessage.timestamp),
+      unreadCount: 1,
+      isArchived: false,
+      isSpam: false,
+      isPinned: true,
+      isBank: true,
+      participants: [user.uid, 'cbe']
+    };
+    
+    await setDoc(convRef, cbeConv, { merge: true });
+    
+    // Add CBE message
+    const msgId = createLocalId();
+    const message = {
+      id: msgId,
+      text: cbeMessage.text,
+      sender: 'them',
+      senderId: 'cbe',
+      timestamp: new Date(cbeMessage.timestamp),
+      status: 'delivered',
+      isTransaction: true,
+      transactionData: cbeMessage
+    };
+    
+    await setDoc(doc(msgsRef, msgId), message);
+    await updateDoc(convRef, {
+      lastMessage: `ETB ${cbeMessage.amount}`,
+      lastMessageTime: new Date(cbeMessage.timestamp),
+      unreadCount: activeConversationId === cbeConversationId ? 0 : 1
+    });
+    
+    console.log('CBE message saved to conversation:', cbeMessage.text);
+  };
 
   const handleSelectConversation = async (id: string, contactName?: string) => {
     if (!user) {
