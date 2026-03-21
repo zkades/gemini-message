@@ -46,6 +46,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
           
+    - name: Add Android platform
+      run: npx cap add android || true
+      
     - name: Capacitor sync
       run: npx cap sync android
       
