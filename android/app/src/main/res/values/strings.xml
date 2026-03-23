@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Messages</string>
+    <string name="title_activity_main">Messages</string>
+    <string name="package_name">com.google.messages.clone</string>
+    <string name="custom_url_scheme">com.google.messages.clone</string>
+</resources>
