@@ -28,19 +28,23 @@ android {
     }
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (keystorePropertiesFile.exists() && file(keystoreProperties['storeFile']).exists()) {
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
                 storeFile file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
+            } else {
+                // Use debug signing for CI builds when no keystore is available
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+                storeFile file('../keystore/debug.keystore')
+                storePassword 'android'
             }
         }
     }
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
