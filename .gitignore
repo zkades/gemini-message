@@ -59,7 +59,7 @@ jspm_packages/
 .eslintcache
 
 # Capacitor
-android/
+# android/
 ios/
 *.keystore
 *.jks
