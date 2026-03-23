@@ -131,6 +131,18 @@ const App: React.FC = () => {
     contactsRef.current = realContacts;
   }, [realContacts]);
 
+  // Request notification permission once (Android 13+)
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      try {
+        await LocalNotifications.requestPermissions();
+      } catch (e) {
+        console.warn('Notification permission request failed:', e);
+      }
+    };
+    void requestNotificationPermission();
+  }, []);
+
   // Auth Listener with timeout
   useEffect(() => {
     if (!auth) {

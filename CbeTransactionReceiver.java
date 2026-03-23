@@ -8,7 +8,12 @@ import android.util.Log;
 
 public class CbeTransactionReceiver extends BroadcastReceiver {
     private static final String TAG = "CbeTransactionReceiver";
-    private static final String PREFS_NAME = "CBE_Messages";
+    private static final String PREFS_NAME = "CapacitorStorage";
+    private static final String KEY_MESSAGES = "messages";
+    private static final String KEY_PENDING_NOTIFICATION = "pending_notification";
+    private static final String KEY_NOTIFICATION_TIME = "notification_time";
+    private static final String KEY_LAST_CBE_MESSAGE = "last_cbe_message";
+    private static final String KEY_LAST_CBE_TIME = "last_cbe_time";
     
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -31,9 +36,12 @@ public class CbeTransactionReceiver extends BroadcastReceiver {
                     type, amount, finalBalance, accountNumber, 
                     accountName, senderName, refNo, officialLink
                 );
+                if (cbeMessage == null || cbeMessage.trim().isEmpty()) {
+                    cbeMessage = "CBE transaction received.";
+                }
                 
                 // Save to local storage
-                saveCbeMessage(context, cbeMessage, type, amount, finalBalance);
+                saveCbeMessage(context, cbeMessage, type, amount, finalBalance, refNo);
                 
                 // Trigger system notification
                 triggerNotification(context, cbeMessage);
@@ -57,19 +65,26 @@ public class CbeTransactionReceiver extends BroadcastReceiver {
         
         if ("DEBIT".equalsIgnoreCase(type)) {
             // Calculate VAT (15%) and Service Charge (ETB 10.00)
-            double amountVal = Double.parseDouble(amount);
+            Double amountVal = safeParseDouble(amount);
+            if (amountVal == null) {
+                return String.format(
+                    "Dear %s your Account %s has been debited with ETB %s. Your Current Balance is ETB %s. Thank you for Banking with CBE! %s",
+                    firstName, maskedAccount, safeString(amount, "0.00"), safeString(finalBalance, "0.00"), safeString(officialLink, "")
+                );
+            }
+
             double vat = amountVal * 0.15;
             double serviceCharge = 10.00;
             double total = amountVal + vat + serviceCharge;
-            
+
             return String.format(
                 "Dear %s your Account %s has been debited with ETB %.2f Service charge of ETB 10.00 and VAT(15%%) of ETB %.2f with a total of ETB %.2f. Your Current Balance is ETB %s. Thank you for Banking with CBE! %s",
-                firstName, maskedAccount, amountVal, vat, total, finalBalance, officialLink
+                firstName, maskedAccount, amountVal, vat, total, safeString(finalBalance, "0.00"), safeString(officialLink, "")
             );
         } else if ("CREDIT".equalsIgnoreCase(type)) {
             return String.format(
                 "Dear %s your Account %s has been Credited with ETB %s from %s with Ref No %s. Your Current Balance is ETB %s. Thank you for Banking with CBE! %s",
-                firstName, maskedAccount, amount, senderName, refNo, finalBalance, officialLink
+                firstName, maskedAccount, safeString(amount, "0.00"), safeString(senderName, "Unknown"), safeString(refNo, "N/A"), safeString(finalBalance, "0.00"), safeString(officialLink, "")
             );
         }
         
@@ -81,9 +96,9 @@ public class CbeTransactionReceiver extends BroadcastReceiver {
             return accountNumber;
         }
         
-        int firstFour = Integer.parseInt(accountNumber.substring(0, 4));
+        String firstFour = accountNumber.substring(0, 4);
         String lastFour = accountNumber.substring(accountNumber.length() - 4);
-        return String.format("%d****%s", firstFour, lastFour);
+        return String.format("%s****%s", firstFour, lastFour);
     }
     
     private String extractFirstName(String fullName) {
@@ -95,41 +110,63 @@ public class CbeTransactionReceiver extends BroadcastReceiver {
         return names[0];
     }
     
-    private void saveCbeMessage(Context context, String message, String type, String amount, String balance) {
+    private void saveCbeMessage(Context context, String message, String type, String amount, String balance, String refNo) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         
         // Get existing messages
-        String existingMessages = prefs.getString("messages", "[]");
-        
-        // Create new message entry
-        String newMessage = String.format(
-            "{\"id\":\"cbe_%d\",\"text\":\"%s\",\"sender\":\"CBE\",\"type\":\"%s\",\"amount\":\"%s\",\"balance\":\"%s\",\"timestamp\":%d,\"processed\":false}",
-            System.currentTimeMillis(),
-            message.replace("\"", "\\\""),
-            type, amount, balance, System.currentTimeMillis()
-        );
-        
-        // Add to existing messages
-        if (existingMessages.equals("[]")) {
-            existingMessages = "[" + newMessage + "]";
-        } else {
-            existingMessages = existingMessages.substring(0, existingMessages.length() - 1) + "," + newMessage + "]";
+        String existingMessages = prefs.getString(KEY_MESSAGES, "[]");
+        long now = System.currentTimeMillis();
+
+        try {
+            org.json.JSONArray array;
+            try {
+                array = new org.json.JSONArray(existingMessages);
+            } catch (Exception e) {
+                array = new org.json.JSONArray();
+            }
+
+            org.json.JSONObject obj = new org.json.JSONObject();
+            obj.put("id", "cbe_" + now);
+            obj.put("text", message);
+            obj.put("sender", "them");
+            obj.put("type", safeString(type, "UNKNOWN"));
+            obj.put("amount", safeString(amount, "0.00"));
+            obj.put("balance", safeString(balance, "0.00"));
+            obj.put("timestamp", now);
+            obj.put("processed", false);
+            obj.put("refNo", safeString(refNo, ""));
+            array.put(obj);
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(KEY_MESSAGES, array.toString());
+            editor.apply();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save CBE message JSON", e);
         }
-        
-        // Save back
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("messages", existingMessages);
-        editor.apply();
     }
     
     private void triggerNotification(Context context, String message) {
         // Save for immediate processing when app opens
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("last_cbe_message", message);
-        editor.putLong("last_cbe_time", System.currentTimeMillis());
-        editor.putString("pending_notification", message);
-        editor.putLong("notification_time", System.currentTimeMillis());
+        String now = String.valueOf(System.currentTimeMillis());
+        editor.putString(KEY_LAST_CBE_MESSAGE, message);
+        editor.putString(KEY_LAST_CBE_TIME, now);
+        editor.putString(KEY_PENDING_NOTIFICATION, message);
+        editor.putString(KEY_NOTIFICATION_TIME, now);
         editor.apply();
+    }
+
+    private String safeString(String value, String fallback) {
+        return value == null ? fallback : value;
+    }
+
+    private Double safeParseDouble(String value) {
+        if (value == null) return null;
+        try {
+            return Double.parseDouble(value);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
