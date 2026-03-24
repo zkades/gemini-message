@@ -151,6 +151,81 @@ const App: React.FC = () => {
       return;
     }
 
+    // Handle Android back button
+    const handleBackButton = useCallback(() => {
+      if (view === 'chat' && activeConversationId) {
+        setView('list');
+        return true; // Prevent default behavior (app closing)
+      } else if (view === 'profile' || view === 'profileDetail' || view === 'archived' || view === 'spam' || view === 'devicePairing' || view === 'settings' || view === 'help' || view === 'systemSettings' || view === 'contacts' || view === 'newChat') {
+        setView('list');
+        return true; // Prevent default behavior (app closing)
+      }
+      return false; // Allow default behavior (app closing) when on list view
+    }, [view, activeConversationId]);
+
+    // Add Android-specific back button handling
+    useEffect(() => {
+      const setupAndroidBackButton = () => {
+        // Check if we're in Android environment
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        if (isAndroid) {
+          // Override the default back button behavior
+          const originalBackFunction = window.history.back;
+          
+          window.history.back = () => {
+            const handled = handleBackButton();
+            if (!handled) {
+              // If we didn't handle it, call the original back function
+              originalBackFunction.call(window.history);
+            }
+          };
+          
+          // Also handle the hardware back button event
+          const handleHardwareBack = (event: Event) => {
+            event.preventDefault();
+            const handled = handleBackButton();
+            if (!handled) {
+              // If we didn't handle it, allow the app to close
+              (event as any).returnValue = false;
+            }
+          };
+          
+          document.addEventListener('backbutton', handleHardwareBack);
+          
+          return () => {
+            // Cleanup
+            window.history.back = originalBackFunction;
+            document.removeEventListener('backbutton', handleHardwareBack);
+          };
+        }
+      };
+      
+      const cleanup = setupAndroidBackButton();
+      return cleanup;
+    }, [handleBackButton]);
+
+    // Listen for browser history changes for web fallback
+    useEffect(() => {
+      const handleHistoryChange = (event: PopStateEvent) => {
+        // Handle back button navigation
+        if (handleBackButton()) {
+          // If we handled the navigation, prevent the default
+          event.preventDefault();
+          window.history.pushState({ view: view }, '', '');
+        }
+      };
+
+      window.addEventListener('popstate', handleHistoryChange);
+      
+      // Initialize history state
+      window.history.replaceState({ view: view }, '', '');
+      
+      return () => {
+        window.removeEventListener('popstate', handleHistoryChange);
+      };
+    }, [handleBackButton, view]);
+
     let authTimeout: NodeJS.Timeout;
     let unsubscribe: (() => void) | null = null;
 
