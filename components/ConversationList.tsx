@@ -3,14 +3,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Conversation } from '../types';
 
 const GOOGLE_PALETTE = [
-  '#4285F4', // Google Blue
-  '#DB4437', // Google Red
-  '#F4B400', // Google Yellow
-  '#0F9D58', // Google Green
-  '#AB47BC',
-  '#00ACC1',
-  '#FF7043',
-  '#9E9D24',
+  '#3C4043', // Google Blue
+  '#3C4044', // Google Red
+  '#3C4045', // Google Yellow
+  '#3C4046', // Google Green
+  '#3C4047',
+  '#3C4048',
+  '#3C4041',
+  '#3C4042',
 ];
 
 const hashString = (value: string) => {
@@ -233,11 +233,14 @@ const ConversationList: React.FC<Props> = ({
                   className="w-9 h-9 rounded-full border border-gray-700 flex items-center justify-center overflow-hidden"
                   style={{ backgroundColor: userColor }}
                 >
-                  <img 
-                    src="/2.png" 
-                    alt="Profile" 
-                    className="w-7 h-7 object-contain"
-                  />
+                  <svg 
+                    className="w-7 h-7 flex-shrink-0" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="12" cy="8" r="3" fill="white"/>
+                    <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+                  </svg>
                 </div>
                 {accountEmail && (
                   <span className="mt-1 text-[9px] text-gray-400 max-w-[70px] truncate">
@@ -255,11 +258,14 @@ const ConversationList: React.FC<Props> = ({
         {!isDefaultApp && !isSelectionMode && (
           <div className="mx-4 mb-4 bg-[#1f2933] rounded-[24px] p-4 flex flex-col items-center animate-fade-in border border-gray-800/50">
              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3 shadow-md" style={{ backgroundColor: pickPaletteColor('messages') }}>
-                <img 
-                  src="/2.png" 
-                  alt="Messages" 
-                  className="w-6 h-6 object-contain"
-                />
+                <svg 
+                  className="w-6 h-6 flex-shrink-0" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="8" r="3" fill="white"/>
+                  <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+                </svg>
              </div>
              <p className="text-[14px] text-center text-white mb-4 px-2">
                Messages is better when it's your default SMS app
@@ -297,11 +303,14 @@ const ConversationList: React.FC<Props> = ({
                       className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${conv.isAi ? 'border-2 border-blue-500' : 'border border-gray-700'}`}
                       style={{ backgroundColor: convColor }}
                     >
-                      <img 
-                        src="/2.png" 
-                        alt={conv.name} 
-                        className="w-8 h-8 object-contain"
-                      />
+                      <svg 
+                        className="w-8 h-8 flex-shrink-0" 
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="8" r="3" fill="white"/>
+                        <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+                      </svg>
                     </div>
                   </div>
                   {isSelected && (

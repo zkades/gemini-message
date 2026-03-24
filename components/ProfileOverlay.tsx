@@ -2,15 +2,16 @@
 import React, { useState } from 'react';
 import { UserAccount } from '../types';
 
+
 const GOOGLE_PALETTE = [
-  '#4285F4', // Google Blue
-  '#DB4437', // Google Red
-  '#F4B400', // Google Yellow
-  '#0F9D58', // Google Green
-  '#AB47BC',
-  '#00ACC1',
-  '#FF7043',
-  '#9E9D24',
+  '#3C4043', // Google Blue
+  '#3C4044', // Google Red
+  '#3C4045', // Google Yellow
+  '#3C4046', // Google Green
+  '#3C4047',
+  '#3C4048',
+  '#3C4041',
+  '#3C4042',
 ];
 
 const hashString = (value: string) => {
@@ -117,22 +118,28 @@ const ProfileOverlay: React.FC<Props> = ({
             className="w-[96px] h-[96px] rounded-full overflow-hidden border border-gray-700 shadow-lg flex items-center justify-center"
             style={{ backgroundColor: userColor }}
           >
-            <img 
-              src="/2.png" 
-              alt="Profile" 
-              className="w-20 h-20 object-contain"
-            />
+            <svg 
+              className="w-20 h-20 flex-shrink-0" 
+              fill="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="8" r="3" fill="white"/>
+              <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+            </svg>
           </div>
           <div className="absolute bottom-0 right-0 bg-[#1f2933] p-1.5 rounded-full border border-gray-800 shadow-md">
              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           </div>
         </div>
         <div className="flex items-center justify-center space-x-2">
-          <img 
-            src="/2.png" 
-            alt="Account" 
-            className="w-6 h-6 object-contain"
-          />
+          <svg 
+            className="w-6 h-6 flex-shrink-0" 
+            fill="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="8" r="3" fill="white"/>
+            <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+          </svg>
           <div>
             <h2 className="text-[24px] text-white mt-4 font-normal tracking-wide">
               Hi, {emailTag}

@@ -55,14 +55,14 @@ const IMPORT_CHUNK_SIZE = 50;
 const SMS_POLL_INTERVAL_MS = 45000;
 
 const GOOGLE_PALETTE = [
-  '#4285F4', // Google Blue
-  '#DB4437', // Google Red
-  '#F4B400', // Google Yellow
-  '#0F9D58', // Google Green
-  '#AB47BC',
-  '#00ACC1',
-  '#FF7043',
-  '#9E9D24',
+  '#3C4043', // Google Blue
+  '#3C4044', // Google Red
+  '#3C4045', // Google Yellow
+  '#3C4046', // Google Green
+  '#3C4047',
+  '#3C4048',
+  '#3C4041',
+  '#3C4042',
 ];
 
 const hashString = (value: string) => {

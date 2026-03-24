@@ -4,14 +4,14 @@ import { Conversation, Message } from '../types';
 import { generateAiReply } from '../services/geminiService';
 
 const GOOGLE_PALETTE = [
-  '#4285F4', // Google Blue
-  '#DB4437', // Google Red
-  '#F4B400', // Google Yellow
-  '#0F9D58', // Google Green
-  '#AB47BC',
-  '#00ACC1',
-  '#FF7043',
-  '#9E9D24',
+  '#3C4043', // Google Blue
+  '#3C4044', // Google Red
+  '#3C4045', // Google Yellow
+  '#3C4046', // Google Green
+  '#3C4047',
+  '#3C4048',
+  '#3C4041',
+  '#3C4042',
 ];
 
 const hashString = (value: string) => {
@@ -300,11 +300,14 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
           </button>
           <div className="flex items-center ml-1">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-gray-700 shadow-sm`} style={{ backgroundColor: pickPaletteColor(conversation.id) }}>
-               <img 
-                 src="/2.png" 
-                 alt={conversation.name} 
-                 className="w-8 h-8 object-cover"
-               />
+               <svg 
+                 className="w-8 h-8 flex-shrink-0" 
+                 fill="currentColor" 
+                 viewBox="0 0 24 24"
+               >
+                 <circle cx="12" cy="8" r="3" fill="white"/>
+                 <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+               </svg>
             </div>
             <h3 className="text-[20px] font-normal ml-4 tracking-tight">{conversation.name}</h3>
           </div>
