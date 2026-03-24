@@ -104,6 +104,13 @@ const SYSTEM_CONTACTS: Contact[] = [
   { id: 'sc5', name: 'Hanna M.', phone: '091 001 2233', color: '#9c27b0', isSystemContact: true },
 ];
 
+// Global back button handler for Android
+declare global {
+  interface Window {
+    handleBackButton: () => boolean;
+  }
+}
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -143,24 +150,18 @@ const App: React.FC = () => {
     void requestNotificationPermission();
   }, []);
 
-  // Simple Android back button handler using browser history
+  // Global back button handler for Android
   useEffect(() => {
-    // Update history when view changes
-    if (view !== 'list') {
-      window.history.pushState({ view: view }, '', '');
-    }
-
-    const handlePopState = (event: PopStateEvent) => {
+    window.handleBackButton = () => {
       if (view !== 'list') {
-        event.preventDefault();
         setView('list');
+        return true; // Handled, don't close app
       }
+      return false; // Not handled, allow app to close
     };
 
-    window.addEventListener('popstate', handlePopState);
-    
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      delete (window as any).handleBackButton;
     };
   }, [view]);
 
