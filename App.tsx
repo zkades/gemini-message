@@ -477,6 +477,34 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkCbeMessages = async () => {
       try {
+        // DEBUG: Force create CBE conversation for testing
+        if (user && db) {
+          const cbeConversationId = 'CBE_NOTIFICATIONS';
+          const convRef = doc(db, 'users', user.uid, 'conversations', cbeConversationId);
+          
+          // Check if CBE conversation exists
+          const existingConv = conversations.find(c => c.id === cbeConversationId);
+          if (!existingConv) {
+            console.log('Creating CBE conversation for testing...');
+            const testCbeConv = {
+              id: cbeConversationId,
+              name: 'CBE',
+              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=cbe&backgroundColor=FF6B35',
+              lastMessage: 'Test CBE Transaction',
+              lastMessageTime: new Date(),
+              unreadCount: 0,
+              isArchived: false,
+              isSpam: false,
+              isPinned: true,
+              isBank: true,
+              participants: [user.uid, 'cbe']
+            };
+            
+            await setDoc(convRef, testCbeConv, { merge: true });
+            console.log('CBE conversation created for testing');
+          }
+        }
+
         // Check for pending notifications
         const { value: pendingNotification } = await Preferences.get({ key: 'pending_notification' });
         const { value: notificationTime } = await Preferences.get({ key: 'notification_time' });
