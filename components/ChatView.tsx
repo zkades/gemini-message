@@ -365,7 +365,7 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
         )}
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/*" onChange={handleFileChange} />
 
-        <div className="px-4 pb-10 pt-2 flex flex-col space-y-2 safe-area-bottom bg-[#0b141b] w-full">
+        <div className="px-4 pb-10 pt-2 safe-area-bottom bg-[#0b141b] w-full">
           {isCbeChat ? (
             <div className="flex items-center justify-center py-8">
               <span className="text-gray-400 text-[14px]">
@@ -379,32 +379,29 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
               </span>
             </div>
           ) : (
-            <div className="flex-1 flex items-center bg-[#1f2933] rounded-[28px] px-5 py-2.5 overflow-hidden transition-colors hover:bg-[#2d3748]">
-              <input type="text" placeholder={isCbeChat ? 'CBE messages are read-only' : 'Text message'} disabled={isCbeChat} className="flex-1 bg-transparent border-none focus:ring-0 text-[16px] text-white outline-none placeholder-gray-400 min-w-0 font-roboto" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSend()} onFocus={() => setActiveOverlay('none')} />
-              <div className="flex items-center space-x-4 ml-3 flex-shrink-0">
-                <button onClick={() => toggleOverlay('emoji')} disabled={isCbeChat} className="active:scale-90 text-gray-400 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div className="flex items-end space-x-2">
+              <div className="flex-1 flex items-center bg-[#1f2933] rounded-[28px] px-4 py-2.5 overflow-hidden transition-colors hover:bg-[#2d3748]">
+                <input type="text" placeholder="Text message" className="flex-1 bg-transparent border-none focus:ring-0 text-[16px] text-white outline-none placeholder-gray-400 min-w-0 font-roboto" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSend()} onFocus={() => setActiveOverlay('none')} />
+                <button onClick={() => toggleOverlay('emoji')} className="p-1 text-gray-400 hover:text-white transition-colors active:scale-90">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </button>
+              </div>
+              <div className="flex items-center">
+                {isInputEmpty ? (
+                  <>
+                    {isRecording && <span className="text-red-500 font-mono text-sm animate-pulse mr-2">{formatTime(recordingTime)}</span>}
+                    <button onClick={isRecording ? stopRecording : startRecording} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-[#1f2933] text-[#7fcfff] hover:bg-[#2d3748]'}`}>
+                      {isRecording ? <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>}
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => handleSend()} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#a8c7fa] active:scale-90 transition-all shadow-md">
+                    <svg className="w-5 h-5 text-[#062e6f]" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                  </button>
+                )}
               </div>
             </div>
           )}
-
-            {!isCbeChat && (
-              <>
-                {isInputEmpty ? (
-                  <div className="flex items-center space-x-2">
-                    {isRecording && <span className="text-red-500 font-mono text-sm animate-pulse">{formatTime(recordingTime)}</span>}
-                    <button onClick={isRecording ? stopRecording : startRecording} disabled={isCbeChat} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-[#1f2933] text-[#7fcfff] hover:bg-[#2d3748]'}`}>
-                      {isRecording ? <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>}
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => handleSend()} disabled={isCbeChat} className="w-12 h-12 flex flex-col items-center justify-center rounded-full bg-[#a8c7fa] flex-shrink-0 active:scale-90 transition-all shadow-md">
-                    <div className="relative flex flex-col items-center pt-1"><span className="text-[9px] font-bold text-[#062e6f] mt-[-2px]">SMS</span></div>
-                  </button>
-                )}
-              </>
-            )}
         </div>
       </div>
     </div>
