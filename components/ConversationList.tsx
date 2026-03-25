@@ -13,6 +13,18 @@ const GOOGLE_PALETTE = [
   '#3C4042',
 ];
 
+// Google palette for header profile picture (original Google colors)
+const GOOGLE_PALETTE_HEADER = [
+  '#4285F4', // Google Blue
+  '#DB4437', // Google Red
+  '#F4B400', // Google Yellow
+  '#0F9D58', // Google Green
+  '#AB47BC',
+  '#00ACC1',
+  '#FF7043',
+  '#9E9D24',
+];
+
 const hashString = (value: string) => {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -28,6 +40,12 @@ const pickPaletteColor = (key: string) => {
   return GOOGLE_PALETTE[idx];
 };
 
+const pickHeaderPaletteColor = (key: string) => {
+  const safeKey = key || 'unknown';
+  const idx = hashString(safeKey) % GOOGLE_PALETTE_HEADER.length;
+  return GOOGLE_PALETTE_HEADER[idx];
+};
+
 const getUserDisplayName = (email: string) => {
   return email ? email.replace(/[^a-zA-Z0-9]/g, '').slice(0, 5).toUpperCase() : 'USER';
 };
@@ -39,15 +57,15 @@ interface Props {
   onStartNewChat: () => void;
   onOpenContacts: () => void;
   isDefaultApp: boolean;
-  accountEmail?: string;
-  accountName?: string;
+  accountEmail: string;
+  accountName: string;
   onSetDefault: () => void;
   onDelete: (ids: string[]) => void;
   onPin: (ids: string[]) => void;
   onArchive: (ids: string[]) => void;
-  isSyncing?: boolean;
-  cbePhoneNumber?: string;
-  isCbeNumber?: (phone: string) => boolean;
+  isSyncing: boolean;
+  cbePhoneNumber: string;
+  isCbeNumber: (phone?: string) => boolean;
 }
 
 const ConversationList: React.FC<Props> = ({ 
@@ -56,17 +74,47 @@ const ConversationList: React.FC<Props> = ({
   onOpenProfile, 
   onStartNewChat,
   onOpenContacts,
-  isDefaultApp, 
+  isDefaultApp,
   accountEmail,
   accountName,
   onSetDefault,
   onDelete,
   onPin,
   onArchive,
-  isSyncing = false,
+  isSyncing,
   cbePhoneNumber,
   isCbeNumber
 }) => {
+  console.log('ConversationList - accountEmail:', accountEmail);
+  
+  // Get email from multiple sources like ProfileOverlay does
+  let userEmail = accountEmail;
+  
+  // Try backup first
+  if (!userEmail) {
+    const backupEmail = localStorage.getItem('user_email_backup');
+    if (backupEmail) {
+      userEmail = backupEmail;
+      console.log('ConversationList - Using backup email:', userEmail);
+    }
+  }
+  
+  // Try main auth storage
+  if (!userEmail) {
+    const storedAuth = localStorage.getItem('gemini_messages_mock_auth');
+    console.log('ConversationList - No backup, checking main auth:', storedAuth);
+    if (storedAuth) {
+      try {
+        const authData = JSON.parse(storedAuth);
+        userEmail = authData.email;
+        console.log('ConversationList - Extracted email from main auth:', userEmail);
+      } catch (e) {
+        console.error('Error parsing stored auth:', e);
+      }
+    }
+  }
+  
+  console.log('ConversationList - Final userEmail:', userEmail);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -75,7 +123,6 @@ const ConversationList: React.FC<Props> = ({
   const isSelectionMode = selectedIds.length > 0;
   
   // Get email and extract first 5 letters
-  const userEmail = accountEmail;
   const emailTag = userEmail ? userEmail.replace(/[^a-zA-Z0-9]/g, '').slice(0, 5).toUpperCase() : '';
   const userColor = pickPaletteColor(userEmail || '');
 
@@ -235,16 +282,14 @@ const ConversationList: React.FC<Props> = ({
               >
                 <div 
                   className="w-9 h-9 rounded-full border border-gray-700 flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: userColor }}
+                  style={{ backgroundColor: pickHeaderPaletteColor(userEmail || '') }}
                 >
-                  <svg 
-                    className="w-7 h-7 flex-shrink-0" 
-                    fill="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="12" cy="8" r="3" fill="white"/>
-                    <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
-                  </svg>
+                  <span className="text-[14px] font-bold text-white">
+                    {(() => {
+                      console.log('Header profile - userEmail:', userEmail);
+                      return userEmail ? userEmail.charAt(0).toUpperCase() : 'U';
+                    })()}
+                  </span>
                 </div>
                 {accountEmail && (
                   <span className="mt-1 text-[9px] text-gray-400 max-w-[70px] truncate">
