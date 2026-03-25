@@ -3,14 +3,14 @@ import { Conversation, Message } from '../types';
 import { generateAiReply } from '../services/geminiService';
 
 const GOOGLE_PALETTE = [
-  '#3C4043',
-  '#3C4044',
-  '#3C4045',
-  '#3C4046',
-  '#3C4047',
-  '#3C4048',
-  '#3C4041',
-  '#3C4042',
+  '#303030', // Google Blue
+  '#303030', // Google Red
+  '#303030', // Google Yellow
+  '#303030', // Google Green
+  '#303030',
+  '#303030',
+  '#303030',
+  '#303030',
 ];
 
 const hashString = (value: string) => {
@@ -262,7 +262,7 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
   const isInputEmpty = inputText.trim().length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-[#0b141b] text-white relative select-none overflow-hidden">
+    <div className="flex flex-col h-full bg-[#0f1419] text-white relative select-none overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-2 pt-10 pb-3 sticky top-0 bg-[#0b141b] z-20">
         <div className="flex items-center">
@@ -271,15 +271,17 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
           </button>
           <div className="flex items-center ml-1">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-gray-700 shadow-sm`} style={{ backgroundColor: pickPaletteColor(conversation.id) }}>
-              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3" fill="white"/><path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/></svg>
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3" fill="#9E9E9E"/><path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="#9E9E9E"/></svg>
             </div>
             <h3 className="text-[20px] font-normal ml-4 tracking-tight">{isCbeChat ? 'CBE' : conversation.name}</h3>
           </div>
         </div>
         <div className="flex items-center pr-2 relative">
-          <button onClick={handleCall} className="p-3 text-[#e3e3e3] hover:bg-gray-800 rounded-full active:scale-90 transition-all">
-            <svg className="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.66l1.97-1.57c.27-.27.35-.66.24-1.02-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19c-.54 0-1 .45-1 .99 0 9.39 7.61 17 17 17 .55 0 1-.45 1-.99v-3.89c0-.54-.45-.99-.99-.99z"/></svg>
-          </button>
+          {!isCbeChat && (
+            <button onClick={handleCall} className="p-3 text-[#e3e3e3] hover:bg-gray-800 rounded-full active:scale-90 transition-all">
+              <svg className="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.66l1.97-1.57c.27-.27.35-.66.24-1.02-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19c-.54 0-1 .45-1 .99 0 9.39 7.61 17 17 17 .55 0 1-.45 1-.99v-3.89c0-.54-.45-.99-.99-.99z"/></svg>
+            </button>
+          )}
           <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className={`p-3 text-[#e3e3e3] rounded-full transition-colors ${isMoreMenuOpen ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-800'}`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
           </button>
@@ -321,11 +323,11 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
             </div>
             {group.messages.map((msg, mIdx) => (
               <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} mb-1`}>
-                <div className={`max-w-[85%] px-4 py-3 rounded-[24px] text-[16px] font-roboto leading-[1.4] shadow-sm transition-all duration-200 ${msg.sender === 'me' ? 'bg-[#1b72e8] text-white rounded-br-[4px]' : 'bg-[#1f2933] text-[#e3e3e3] rounded-bl-[4px]'}`}>
+                <div className={`max-w-[85%] px-4 py-3 rounded-[24px] text-[16px] font-roboto leading-[1.4] shadow-sm transition-all duration-200 ${msg.sender === 'me' ? 'bg-[#9bb8f8] text-[#202124] rounded-br-[4px]' : 'bg-[#1f2933] text-[#E8EAED] rounded-bl-[4px]'}`}>
                   {msg.image && <img src={msg.image} alt="Attachment" className="max-w-full rounded-[16px] mb-2 border border-white/10" referrerPolicy="no-referrer" />}
                   {msg.audio && <div className="mb-2"><audio controls src={msg.audio} className="w-full h-8 filter invert opacity-80" /></div>}
                   <MessageText text={msg.text} />
-                  <div className={`text-[10px] mt-1 opacity-60 text-right ${msg.sender === 'me' ? 'text-white' : 'text-gray-400'}`}>
+                  <div className={`text-[10px] mt-1 opacity-60 text-right ${msg.sender === 'me' ? 'text-[#202124]' : 'text-[#9AA0A6]'}`}>
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{msg.sender === 'me' && ' • Sent'}
                   </div>
                 </div>
@@ -364,15 +366,19 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/*" onChange={handleFileChange} />
 
         <div className="px-4 pb-10 pt-2 flex flex-col space-y-2 safe-area-bottom bg-[#0b141b] w-full">
-          {isCbeChat && (
-            <div className="px-2 py-2 text-center text-xs text-gray-400 bg-[#1c2530] rounded-lg border border-gray-700">This CBE contact is read-only. Replies are disabled.</div>
-          )}
-
-          <div className="flex items-center space-x-3 w-full">
-            <button type="button" disabled={isCbeChat} onClick={handleFileClick} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0 ${isCbeChat ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'hover:bg-[#2d3748]'} ${activeOverlay === 'attachments' ? 'bg-[#7fcfff] text-[#0b141b]' : 'bg-[#1f2933] text-[#7fcfff]'}`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/></svg>
-            </button>
-
+          {isCbeChat ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="text-gray-400 text-[14px]">
+                Can't reply to this short code.{' '}
+                <button 
+                  onClick={() => window.open('https://support.google.com/messages/answer/7658181', '_blank')}
+                  className="text-blue-400 underline hover:text-blue-300 transition-colors"
+                >
+                  Learn more
+                </button>
+              </span>
+            </div>
+          ) : (
             <div className="flex-1 flex items-center bg-[#1f2933] rounded-[28px] px-5 py-2.5 overflow-hidden transition-colors hover:bg-[#2d3748]">
               <input type="text" placeholder={isCbeChat ? 'CBE messages are read-only' : 'Text message'} disabled={isCbeChat} className="flex-1 bg-transparent border-none focus:ring-0 text-[16px] text-white outline-none placeholder-gray-400 min-w-0 font-roboto" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSend()} onFocus={() => setActiveOverlay('none')} />
               <div className="flex items-center space-x-4 ml-3 flex-shrink-0">
@@ -381,20 +387,24 @@ const ChatView: React.FC<Props> = ({ conversation, onBack, onSendMessage, onRece
                 </button>
               </div>
             </div>
+          )}
 
-            {isInputEmpty ? (
-              <div className="flex items-center space-x-2">
-                {isRecording && <span className="text-red-500 font-mono text-sm animate-pulse">{formatTime(recordingTime)}</span>}
-                <button onClick={isRecording ? stopRecording : startRecording} disabled={isCbeChat} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-[#1f2933] text-[#7fcfff] hover:bg-[#2d3748]'}`}>
-                  {isRecording ? <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>}
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => handleSend()} disabled={isCbeChat} className="w-12 h-12 flex flex-col items-center justify-center rounded-full bg-[#a8c7fa] flex-shrink-0 active:scale-90 transition-all shadow-md">
-                <div className="relative flex flex-col items-center pt-1"><span className="text-[9px] font-bold text-[#062e6f] mt-[-2px]">SMS</span></div>
-              </button>
+            {!isCbeChat && (
+              <>
+                {isInputEmpty ? (
+                  <div className="flex items-center space-x-2">
+                    {isRecording && <span className="text-red-500 font-mono text-sm animate-pulse">{formatTime(recordingTime)}</span>}
+                    <button onClick={isRecording ? stopRecording : startRecording} disabled={isCbeChat} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-[#1f2933] text-[#7fcfff] hover:bg-[#2d3748]'}`}>
+                      {isRecording ? <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>}
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => handleSend()} disabled={isCbeChat} className="w-12 h-12 flex flex-col items-center justify-center rounded-full bg-[#a8c7fa] flex-shrink-0 active:scale-90 transition-all shadow-md">
+                    <div className="relative flex flex-col items-center pt-1"><span className="text-[9px] font-bold text-[#062e6f] mt-[-2px]">SMS</span></div>
+                  </button>
+                )}
+              </>
             )}
-          </div>
         </div>
       </div>
     </div>

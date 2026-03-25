@@ -3,14 +3,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Conversation } from '../types';
 
 const GOOGLE_PALETTE = [
-  '#3C4043', // Google Blue
-  '#3C4044', // Google Red
-  '#3C4045', // Google Yellow
-  '#3C4046', // Google Green
-  '#3C4047',
-  '#3C4048',
-  '#3C4041',
-  '#3C4042',
+  '#303030', // Google Blue
+  '#303030', // Google Red
+  '#303030', // Google Yellow
+  '#303030', // Google Green
+  '#303030',
+  '#303030',
+  '#303030',
+  '#303030',
 ];
 
 // Google palette for header profile picture (original Google colors)
@@ -175,7 +175,7 @@ const ConversationList: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0b141b] text-white overflow-hidden relative">
+    <div className="flex flex-col h-full bg-[#0f1419] text-white overflow-hidden relative">
       {/* Dynamic Header - Search or Selection Action Bar */}
       <div className="px-2 pt-10 pb-4 h-[100px] flex items-end">
         {isSelectionMode ? (
@@ -312,8 +312,8 @@ const ConversationList: React.FC<Props> = ({
                   fill="currentColor" 
                   viewBox="0 0 24 24"
                 >
-                  <circle cx="12" cy="8" r="3" fill="white"/>
-                  <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+                  <circle cx="12" cy="8" r="3" fill="#9E9E9E"/>
+                  <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="#9E9E9E"/>
                 </svg>
              </div>
              <p className="text-[14px] text-center text-white mb-4 px-2">
@@ -357,8 +357,8 @@ const ConversationList: React.FC<Props> = ({
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
-                        <circle cx="12" cy="8" r="3" fill="white"/>
-                        <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="white"/>
+                        <circle cx="12" cy="8" r="3" fill="#9E9E9E"/>
+                        <path d="M12 12 C8 12 5 14 5 18 L19 18 C19 14 16 12 12 12 Z" fill="#9E9E9E"/>
                       </svg>
                     </div>
                   </div>
