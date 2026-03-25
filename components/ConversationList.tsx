@@ -46,6 +46,8 @@ interface Props {
   onPin: (ids: string[]) => void;
   onArchive: (ids: string[]) => void;
   isSyncing?: boolean;
+  cbePhoneNumber?: string;
+  isCbeNumber?: (phone: string) => boolean;
 }
 
 const ConversationList: React.FC<Props> = ({ 
@@ -61,7 +63,9 @@ const ConversationList: React.FC<Props> = ({
   onDelete,
   onPin,
   onArchive,
-  isSyncing = false
+  isSyncing = false,
+  cbePhoneNumber,
+  isCbeNumber
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -325,11 +329,10 @@ const ConversationList: React.FC<Props> = ({
                 <div className="ml-4 flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h3 className={`text-[16px] truncate ${conv.unreadCount > 0 || isSelected ? 'font-bold' : 'font-normal'} text-[#fcfcfc]`}>
-                      {conv.name}
+                      {(isCbeNumber?.(conv.phone || '') || conv.id === 'CBE_NOTIFICATIONS' || conv.name === 'CBE') ? 'CBE' : conv.name}
                     </h3>
                     <div className="flex items-center space-x-2">
-                       {conv.isPinned && (
-                         <svg className="w-3.5 h-3.5 text-gray-400 transform rotate-45" fill="currentColor" viewBox="0 0 24 24">
+                       {conv.isPinned && (                         <svg className="w-3.5 h-3.5 text-gray-400 transform rotate-45" fill="currentColor" viewBox="0 0 24 24">
                            <path d="M16 9V4l1 1V2H7v3l1-1v5L6 12v2h5v7l1 1 1-1v-7h5v-2l-2-3z" />
                          </svg>
                        )}

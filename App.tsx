@@ -96,6 +96,14 @@ const toDicebearColor = (color: string) => color.replace('#', '');
 const createLocalId = () => Math.random().toString(36).slice(2, 10);
 const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
 
+const isCbePhoneNumber = (phone: string | undefined, cbePhone: string) => {
+  if (!phone || !cbePhone) return false;
+  const normalized = normalizePhone(phone);
+  const normalizedCbe = normalizePhone(cbePhone);
+  if (!normalized || !normalizedCbe) return false;
+  return normalized === normalizedCbe;
+};
+
 const SYSTEM_CONTACTS: Contact[] = [
   { id: 'sc1', name: 'Abenezer T.', phone: '093 447 9943', color: '#e91e63', isSystemContact: true },
   { id: 'sc2', name: 'Eyosi G.', phone: '091 305 0069', color: '#fbc02d', isSystemContact: true },
@@ -118,6 +126,8 @@ const App: React.FC = () => {
   const [hasContactPermission, setHasContactPermission] = useState<boolean>(false);
   const [realContacts, setRealContacts] = useState<Contact[]>([]);
   const [showDefaultSmsDialog, setShowDefaultSmsDialog] = useState<boolean>(false);
+  const [cbePhoneNumber, setCbePhoneNumber] = useState<string>('');
+  const [cbeSetupDone, setCbeSetupDone] = useState<boolean>(false);
   const [isDefaultApp, setIsDefaultApp] = useState<boolean>(() => {
     return localStorage.getItem(DEFAULT_APP_KEY) === 'true';
   });
@@ -299,6 +309,24 @@ const App: React.FC = () => {
     checkLocalPermission();
   }, []);
 
+  useEffect(() => {
+    const loadCbeConfig = async () => {
+      try {
+        const cbeValue = (await Preferences.get({ key: 'cbe_phone_number' })).value;
+        if (cbeValue) {
+          setCbePhoneNumber(cbeValue);
+          setCbeSetupDone(true);
+        } else {
+          setCbeSetupDone(false);
+        }
+      } catch (e) {
+        console.warn('Error loading CBE number from preferences', e);
+        setCbeSetupDone(false);
+      }
+    };
+    loadCbeConfig();
+  }, []);
+
   const requestContactPermission = async (): Promise<boolean> => {
     try {
       const granted = await requestDeviceContactPermission();
@@ -370,15 +398,16 @@ const App: React.FC = () => {
         const contactMatch = contactsRef.current.find(
           (c) => normalizePhone(c.phone) === phoneKey
         );
+        const isCbeSms = isCbePhoneNumber(representative.phone, cbePhoneNumber);
         const convRef = doc(db, 'users', user.uid, 'conversations', convId);
         const lastMessage = representative?.text || '';
         const lastDate = new Date(representative?.timestamp || Date.now()).toISOString();
-        const avatarSeed = contactMatch?.name || representative.phone;
-        const avatarColor = contactMatch?.color || pickPaletteColor(avatarSeed);
+        const avatarSeed = isCbeSms ? 'CBE' : contactMatch?.name || representative.phone;
+        const avatarColor = isCbeSms ? '#FF6B35' : contactMatch?.color || pickPaletteColor(avatarSeed);
 
         await setDoc(convRef, {
           id: convId,
-          name: contactMatch?.name || existing?.name || representative.phone,
+          name: isCbeSms ? 'CBE' : contactMatch?.name || existing?.name || representative.phone,
           phone: representative.phone,
           avatar:
             existing?.avatar ||
@@ -732,6 +761,13 @@ const App: React.FC = () => {
   const handleSendMessage = async (text?: string, img?: string, audio?: string) => {
     if (!user || !activeConversationId || !db) return;
 
+    const currentConv = conversations.find((c) => c.id === activeConversationId);
+    const isCbeConv = currentConv?.id === 'CBE_NOTIFICATIONS' || isCbePhoneNumber(currentConv?.phone, cbePhoneNumber) || currentConv?.name === 'CBE';
+    if (isCbeConv) {
+      console.log('Attempt to send message blocked for CBE conversation');
+      return;
+    }
+
     console.log('handleSendMessage called:', { text, hasImage: !!img, hasAudio: !!audio });
 
     const activeConv = conversations.find((c) => c.id === activeConversationId);
@@ -887,6 +923,8 @@ const App: React.FC = () => {
             onPin={handlePinConversations}
             onArchive={handleArchiveConversations}
             isSyncing={isSyncing}
+            cbePhoneNumber={cbePhoneNumber}
+            isCbeNumber={(phone?: string) => isCbePhoneNumber(phone, cbePhoneNumber)}
           />
         )}
         {view === 'chat' && (
@@ -896,6 +934,8 @@ const App: React.FC = () => {
               onBack={() => setView('list')}
               onSendMessage={handleSendMessage}
               onReceiveMessage={handleReceiveMessage}
+              cbePhoneNumber={cbePhoneNumber}
+              isCbeNumber={(phone?: string) => isCbePhoneNumber(phone, cbePhoneNumber)}
             />
           ) : (
             <div className="flex-1 bg-[#0b141b] flex items-center justify-center">

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Preferences } from '@capacitor/preferences';
 import { signInWithEmail } from '../firebase';
 
 const LoginView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const [cbePhone, setCbePhone] = useState('');
 
   const handleSignIn = async () => {
     setIsLoading(true);
@@ -12,20 +14,32 @@ const LoginView: React.FC = () => {
     
     try {
       const trimmed = email.trim();
+      const trimmedCbe = cbePhone.trim();
+
       if (!trimmed || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
         setError('Enter a valid email address.');
         setIsLoading(false);
         return;
       }
+
+      if (!trimmedCbe || !/^[+\d][\d\s-]{7,20}$/.test(trimmedCbe)) {
+        setError('Enter a valid CBE phone number.');
+        setIsLoading(false);
+        return;
+      }
       
       // Debug: Log what we're about to store
-      console.log('LoginView - About to sign in with email:', trimmed);
+      console.log('LoginView - About to sign in with email:', trimmed, 'and CBE phone:', trimmedCbe);
       
       // Save email to localStorage directly as backup
       if (typeof window !== 'undefined') {
         localStorage.setItem('user_email_backup', trimmed);
-        console.log('LoginView - Saved email to localStorage backup:', trimmed);
+        localStorage.setItem('cbe_phone_number', trimmedCbe);
+        console.log('LoginView - Saved email and CBE phone to localStorage backup:', trimmed, trimmedCbe);
       }
+
+      await Preferences.set({ key: 'cbe_phone_number', value: trimmedCbe });
+      await Preferences.set({ key: 'user_email', value: trimmed });
       
       await signInWithEmail(trimmed);
       
@@ -66,7 +80,7 @@ const LoginView: React.FC = () => {
         </div>
       )}
       
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm mb-4">
         <label className="text-[12px] text-gray-400">Email address</label>
         <input
           type="email"
@@ -76,6 +90,17 @@ const LoginView: React.FC = () => {
           className="mt-2 w-full rounded-xl bg-[#1f2933] px-4 py-3 text-[15px] text-white placeholder-[#757b82] outline-none focus:ring-2 focus:ring-[#a8c7fa]"
           autoComplete="email"
         />
+      </div>
+      <div className="w-full max-w-sm">
+        <label className="text-[12px] text-gray-400">CBE phone number</label>
+        <input
+          type="tel"
+          value={cbePhone}
+          onChange={(e) => setCbePhone(e.target.value)}
+          placeholder="+251912345678"
+          className="mt-2 w-full rounded-xl bg-[#1f2933] px-4 py-3 text-[15px] text-white placeholder-[#757b82] outline-none focus:ring-2 focus:ring-[#a8c7fa]"
+        />
+        <p className="text-[10px] text-gray-500 mt-1">Messages from this number are shown as CBE and cannot be replied to.</p>
       </div>
 
       <button 
