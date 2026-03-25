@@ -377,22 +377,20 @@ const ConversationList: React.FC<Props> = ({
                       {(isCbeNumber?.(conv.phone || '') || conv.id === 'CBE_NOTIFICATIONS' || conv.name === 'CBE') ? 'CBE' : conv.name}
                     </h3>
                     <div className="flex items-center space-x-2">
-                       {conv.isPinned && (                         <svg className="w-3.5 h-3.5 text-gray-400 transform rotate-45" fill="currentColor" viewBox="0 0 24 24">
+                       {conv.isPinned && (
+                         <svg className="w-3.5 h-3.5 text-gray-400 transform rotate-45" fill="currentColor" viewBox="0 0 24 24">
                            <path d="M16 9V4l1 1V2H7v3l1-1v5L6 12v2h5v7l1 1 1-1v-7h5v-2l-2-3z" />
                          </svg>
                        )}
-                       <span className={`text-[12px] whitespace-nowrap ${conv.unreadCount > 0 ? 'text-[#7fcfff] font-bold' : 'text-[#9aa0a6]'}`}>
+                       {conv.unreadCount > 0 && (
+                         <div className="absolute bottom-2 -right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                           {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+                         </div>
+                       )}
+                       <span className={`absolute top-2 right-2 text-[12px] whitespace-nowrap ${conv.unreadCount > 0 ? 'text-[#7fcfff] font-bold' : 'text-[#9aa0a6]'}`}>
                         {conv.unreadCount > 0 ? 'Now' : 'Thu'}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-0.5">
-                    <p className={`text-[14px] truncate flex-1 leading-tight ${conv.unreadCount > 0 ? 'text-[#fcfcfc] font-medium' : 'text-[#9aa0a6]'}`}>
-                      {conv.lastMessage || (isSelected ? "Selected" : "No messages")}
-                    </p>
-                    {conv.unreadCount > 0 && (
-                      <div className="bg-[#7fcfff] w-2.5 h-2.5 rounded-full ml-2 shadow-sm"></div>
-                    )}
                   </div>
                 </div>
               </div>
