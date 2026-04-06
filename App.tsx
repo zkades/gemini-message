@@ -12,6 +12,7 @@ import {
   orderBy, 
   onSnapshot, 
   getDocs,
+  getDoc,
   onAuthStateChanged,
   OperationType,
   logout,
@@ -829,6 +830,22 @@ const App: React.FC = () => {
 
   const handleReceiveMessage = async (id: string, text: string) => {
     if (!user || !db) return;
+    
+    // Prevent duplicate responses
+    const recentResponsesKey = `recent_gemini_response_${id}`;
+    const lastResponse = localStorage.getItem(recentResponsesKey);
+    const now = Date.now();
+    
+    if (lastResponse && (now - parseInt(lastResponse)) < 10000) {
+      console.log('Preventing duplicate Gemini response');
+      return;
+    }
+    
+    localStorage.setItem(recentResponsesKey, now.toString());
+    
+    // Add 4-second delay for testing unread feature
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    
     const convRef = doc(db, 'users', user.uid, 'conversations', id);
     const msgsRef = collection(db, 'users', user.uid, 'conversations', id, 'messages');
 
@@ -844,12 +861,21 @@ const App: React.FC = () => {
 
     try {
       await setDoc(doc(msgsRef, msgId), newMessage);
+      
+      // Get current conversation to increment unread count properly
+      const convDoc = await getDoc(convRef);
+      const currentUnreadCount = convDoc.exists() ? convDoc.data()?.unreadCount || 0 : 0;
+      const newUnreadCount = currentUnreadCount + 1;
+      
+      console.log('Updating unread count from', currentUnreadCount, 'to', newUnreadCount, 'for conversation:', id);
       await updateDoc(convRef, {
         lastMessage: text,
         lastMessageTime: serverTimestamp(),
-        unreadCount: (activeConversationId === id && view === 'chat') ? 0 : 1
+        unreadCount: newUnreadCount
       });
+      console.log('Unread count updated successfully');
     } catch (e: any) {
+      console.error('Error updating unread count:', e);
       handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}/conversations/${id}/messages`);
     }
   };

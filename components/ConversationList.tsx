@@ -383,15 +383,18 @@ const ConversationList: React.FC<Props> = ({
                          </svg>
                        )}
                        {conv.unreadCount > 0 && (
-                         <div className="absolute bottom-2 -right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                           {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+                         <div className="absolute bottom-2 right-2 bg-[#9bb8f8] text-[#202124] text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                           {conv.unreadCount > 999 ? '999+' : conv.unreadCount}
                          </div>
                        )}
-                       <span className={`absolute top-2 right-2 text-[12px] whitespace-nowrap ${conv.unreadCount > 0 ? 'text-[#7fcfff] font-bold' : 'text-[#9aa0a6]'}`}>
-                        {conv.unreadCount > 0 ? 'Now' : 'Thu'}
+                       <span className={`absolute top-2 right-2 text-[12px] whitespace-nowrap ${conv.unreadCount > 0 ? 'font-bold text-[#fcfcfc]' : 'text-[#9aa0a6]'}`}>
+                        {conv.unreadCount > 0 ? 'Now' : new Date(conv.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   </div>
+                  <p className={`text-[14px] truncate mt-1 ${conv.unreadCount > 0 ? 'font-bold text-white' : 'text-[#9aa0a6]'}`}>
+                    {conv.lastMessage || (isSelected ? "Selected" : "No messages")}
+                  </p>
                 </div>
               </div>
             );
