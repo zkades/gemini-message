@@ -417,7 +417,7 @@ const App: React.FC = () => {
             )}&backgroundColor=${encodeURIComponent(toDicebearColor(avatarColor))}`,
           lastMessage,
           lastMessageTime: lastDate,
-          unreadCount: isCbeSms ? (existing?.unreadCount || smsList.filter(sms => sms.type === 'received').length) : 0,
+          unreadCount: isCbeSms ? (existing?.unreadCount || smsList.filter(sms => sms.type === 'received' && sms.status === 'delivered').length) : 0,
           isArchived: false,
           isSpam: false,
           isPinned: existing?.isPinned || false,
@@ -731,10 +731,16 @@ const App: React.FC = () => {
     setView('chat');
     
     if (db) {
-      const convRef = doc(db, 'users', user.uid, 'conversations', id);
-      updateDoc(convRef, { unreadCount: 0 }).catch((e: any) => {
-        console.warn("Error updating unread count:", e);
-      });
+      const currentConv = conversations.find((c) => c.id === id);
+      const isCbeConv = currentConv?.id === 'CBE_NOTIFICATIONS' || isCbePhoneNumber(currentConv?.phone, cbePhoneNumber) || currentConv?.name === 'CBE';
+      
+      // Don't reset unread count for CBE conversations (they handle their own unread state)
+      if (!isCbeConv) {
+        const convRef = doc(db, 'users', user.uid, 'conversations', id);
+        updateDoc(convRef, { unreadCount: 0 }).catch((e: any) => {
+          console.warn("Error updating unread count:", e);
+        });
+      }
     }
   };
 
