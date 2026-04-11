@@ -406,16 +406,18 @@ const App: React.FC = () => {
         const avatarSeed = isCbeSms ? 'CBE' : contactMatch?.name || representative.phone;
         const avatarColor = isCbeSms ? '#FF6B35' : contactMatch?.color || pickPaletteColor(avatarSeed);
 
-        // Check if conversation already exists to prevent false unread badges
+        // Perfect unread logic like real message apps
         const conversationExists = existing && existing.id;
-        const lastImportTime = existing?.lastImportTime || 0; // Back to 0 for new conversations
-        const newMessagesCount = smsList.filter(sms => 
-          sms.type === 'received' && 
-          new Date(sms.timestamp).getTime() > lastImportTime
-        ).length;
-
-        // Only set unread count for existing conversations
-        const finalUnreadCount = conversationExists ? (existing?.unreadCount || 0) + newMessagesCount : 0;
+        const lastImportTime = existing?.lastImportTime || 0;
+        
+        // For new conversations: count ALL received messages
+        // For existing conversations: count only NEW messages since last import
+        const unreadCount = conversationExists 
+          ? (existing?.unreadCount || 0) + smsList.filter(sms => 
+              sms.type === 'received' && 
+              new Date(sms.timestamp).getTime() > lastImportTime
+            ).length
+          : smsList.filter(sms => sms.type === 'received').length;
 
         await setDoc(convRef, {
           id: convId,
@@ -428,7 +430,7 @@ const App: React.FC = () => {
             )}&backgroundColor=${encodeURIComponent(toDicebearColor(avatarColor))}`,
           lastMessage,
           lastMessageTime: lastDate,
-          unreadCount: finalUnreadCount,
+          unreadCount: unreadCount,
           lastImportTime: Date.now(),
           isArchived: false,
           isSpam: false,
