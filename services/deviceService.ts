@@ -1,5 +1,6 @@
 import { Contacts } from '@capacitor-community/contacts';
-import { Capacitor, registerPlugin } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 export interface DeviceContact {
   id: string;
@@ -250,7 +251,16 @@ export const fetchOldMessages = async (): Promise<DeviceSMS[]> => {
 
   try {
     console.log('SMS Plugin: Attempting to fetch messages...');
-    const result = await SMSPlugin.getMessages({ limit: 3000 });
+    const { value: lastImportTimestamp } = await Preferences.get({ key: 'last_sms_import_timestamp' });
+    const result = await SMSPlugin.getMessages({ 
+      limit: 50
+    });
+    
+    // Save new timestamp
+    await Preferences.set({ 
+      key: 'last_sms_import_timestamp', 
+      value: Date.now().toString() 
+    });
     console.log('SMS Plugin: Raw result:', result);
     console.log('SMS Plugin: Messages count:', result.messages?.length || 0);
     

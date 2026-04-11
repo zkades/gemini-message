@@ -417,7 +417,7 @@ const App: React.FC = () => {
             )}&backgroundColor=${encodeURIComponent(toDicebearColor(avatarColor))}`,
           lastMessage,
           lastMessageTime: lastDate,
-          unreadCount: isCbeSms ? (existing?.unreadCount || smsList.filter(sms => sms.type === 'received').length) : 0,
+          unreadCount: (existing?.unreadCount || 0) + smsList.filter(sms => sms.type === 'received').length,
           isArchived: false,
           isSpam: false,
           isPinned: existing?.isPinned || false,
