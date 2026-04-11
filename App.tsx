@@ -417,10 +417,11 @@ const App: React.FC = () => {
             )}&backgroundColor=${encodeURIComponent(toDicebearColor(avatarColor))}`,
           lastMessage,
           lastMessageTime: lastDate,
-          unreadCount: 0,
+          unreadCount: isCbeSms ? (existing?.unreadCount || smsList.filter(sms => sms.type === 'received').length) : 0,
           isArchived: false,
           isSpam: false,
           isPinned: existing?.isPinned || false,
+          isBank: isCbeSms,
           participants: [user.uid, phoneKey],
         }, { merge: true });
 
@@ -436,7 +437,7 @@ const App: React.FC = () => {
                 sender: sms.type === 'sent' ? 'me' : 'them',
                 senderId: sms.type === 'sent' ? user.uid : phoneKey,
                 timestamp: new Date(sms.timestamp || Date.now()).toISOString(),
-                status: 'read',
+                status: sms.type === 'sent' ? 'read' : 'delivered',
               }, { merge: true, silent: true });
             })
           );
@@ -635,10 +636,17 @@ const App: React.FC = () => {
     };
     
     await setDoc(doc(msgsRef, msgId), message);
+    
+    // Get current CBE conversation to increment unread count properly (same as Gemini)
+    const convDoc = await getDoc(convRef);
+    const currentUnreadCount = convDoc.exists() ? convDoc.data()?.unreadCount || 0 : 0;
+    const newUnreadCount = currentUnreadCount + 1;
+    
+    console.log('Updating CBE unread count from', currentUnreadCount, 'to', newUnreadCount);
     await updateDoc(convRef, {
       lastMessage: `ETB ${cbeMessage.amount}`,
       lastMessageTime: new Date(cbeMessage.timestamp),
-      unreadCount: activeConversationId === cbeConversationId ? 0 : 1
+      unreadCount: newUnreadCount
     });
     
     console.log('CBE message saved to conversation:', cbeMessage.text);

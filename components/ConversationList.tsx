@@ -383,7 +383,7 @@ const ConversationList: React.FC<Props> = ({
                          </svg>
                        )}
                        {conv.unreadCount > 0 && (
-                         <div className="absolute bottom-2 right-2 bg-[#9bb8f8] text-[#202124] text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                         <div className="absolute top-7 right-2 bg-[#9bb8f8] text-[#202124] text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
                            {conv.unreadCount > 999 ? '999+' : conv.unreadCount}
                          </div>
                        )}
