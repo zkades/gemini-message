@@ -406,6 +406,13 @@ const App: React.FC = () => {
         const avatarSeed = isCbeSms ? 'CBE' : contactMatch?.name || representative.phone;
         const avatarColor = isCbeSms ? '#FF6B35' : contactMatch?.color || pickPaletteColor(avatarSeed);
 
+        // Only count NEW messages since last import
+        const lastImportTime = existing?.lastImportTime || 0;
+        const newMessagesCount = smsList.filter(sms => 
+          sms.type === 'received' && 
+          new Date(sms.timestamp).getTime() > lastImportTime
+        ).length;
+
         await setDoc(convRef, {
           id: convId,
           name: isCbeSms ? 'CBE' : contactMatch?.name || existing?.name || representative.phone,
@@ -417,7 +424,8 @@ const App: React.FC = () => {
             )}&backgroundColor=${encodeURIComponent(toDicebearColor(avatarColor))}`,
           lastMessage,
           lastMessageTime: lastDate,
-          unreadCount: (existing?.unreadCount || 0) + smsList.filter(sms => sms.type === 'received').length,
+          unreadCount: (existing?.unreadCount || 0) + newMessagesCount,
+          lastImportTime: Date.now(),
           isArchived: false,
           isSpam: false,
           isPinned: existing?.isPinned || false,
@@ -732,7 +740,10 @@ const App: React.FC = () => {
     
     if (db) {
       const convRef = doc(db, 'users', user.uid, 'conversations', id);
-      updateDoc(convRef, { unreadCount: 0 }).catch((e: any) => {
+      updateDoc(convRef, { 
+        unreadCount: 0,
+        lastImportTime: Date.now()
+      }).catch((e: any) => {
         console.warn("Error updating unread count:", e);
       });
     }
