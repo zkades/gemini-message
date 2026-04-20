@@ -412,14 +412,17 @@ const App: React.FC = () => {
         
         // Get app install time to determine which messages are actually new
         const appInstallTime = await Preferences.get({ key: 'app_install_time' });
-        const installTime = parseInt(appInstallTime.value || '0') || Date.now();
+        let installTime: number;
         
-        // Save app install time if not set
+        // Save app install time if not set (only ONCE)
         if (!appInstallTime.value) {
+          installTime = Date.now();
           await Preferences.set({ 
             key: 'app_install_time', 
-            value: Date.now().toString() 
+            value: installTime.toString() 
           });
+        } else {
+          installTime = parseInt(appInstallTime.value);
         }
         
         // Only count messages received after app install as unread
@@ -428,10 +431,24 @@ const App: React.FC = () => {
           new Date(sms.timestamp).getTime() > installTime
         ).length;
         
-        // Smart unread counting: only NEW messages count as unread
-        const unreadCount = conversationExists 
-          ? (existing?.unreadCount || 0) + newMessagesCount
-          : newMessagesCount;
+        // Smart unread counting with 5-minute window to prevent infinite incrementing
+        let unreadCount: number;
+        if (conversationExists) {
+          // Check 5-minute window for existing conversations
+          const lastReadTime = existing?.lastReadTime || 0;
+          const timeSinceLastRead = Date.now() - lastReadTime;
+          const shouldIncrement = timeSinceLastRead > 300000; // 5 minutes
+          
+          if (shouldIncrement) {
+            unreadCount = (existing?.unreadCount || 0) + newMessagesCount;
+          } else {
+            // User read recently, don't increment
+            unreadCount = existing?.unreadCount || 0;
+          }
+        } else {
+          // New conversation - count all received messages
+          unreadCount = newMessagesCount;
+        }
 
         await setDoc(convRef, {
           id: convId,
@@ -513,13 +530,30 @@ const App: React.FC = () => {
         const oldMessages = await fetchOldMessages();
         console.log('SMS polling: Found', oldMessages.length, 'messages');
         
-        if (oldMessages.length > 0) {
-          console.log('SMS polling: Importing', oldMessages.length, 'messages');
-          await handleImportOldMessages(oldMessages);
-          console.log('SMS polling: Successfully imported messages');
+        // Get last poll time to filter only truly new messages
+        const lastPollTime = await Preferences.get({ key: 'last_sms_poll_time' });
+        const pollTime = parseInt(lastPollTime.value || '0');
+        
+        // Filter only messages newer than last poll time
+        const trulyNewMessages = oldMessages.filter(sms => 
+          new Date(sms.timestamp).getTime() > pollTime
+        );
+        
+        console.log('SMS polling: Truly new messages:', trulyNewMessages.length);
+        
+        if (trulyNewMessages.length > 0) {
+          console.log('SMS polling: Importing', trulyNewMessages.length, 'new messages');
+          await handleImportOldMessages(trulyNewMessages);
+          console.log('SMS polling: Successfully imported new messages');
         } else {
           console.log('SMS polling: No new messages found');
         }
+        
+        // Update last poll time
+        await Preferences.set({ 
+          key: 'last_sms_poll_time', 
+          value: Date.now().toString() 
+        });
       } catch (e) {
         console.error('SMS polling failed:', e);
       }
