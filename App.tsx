@@ -434,10 +434,10 @@ const App: React.FC = () => {
         // Smart unread counting with 5-minute window to prevent infinite incrementing
         let unreadCount: number;
         if (conversationExists) {
-          // Check 30-second window for existing conversations
+          // Check 3-second window for existing conversations
           const lastReadTime = existing?.lastReadTime || 0;
           const timeSinceLastRead = Date.now() - lastReadTime;
-          const shouldIncrement = timeSinceLastRead > 30000; // 30 seconds
+          const shouldIncrement = timeSinceLastRead > 3000; // 3 seconds
           
           if (shouldIncrement) {
             unreadCount = (existing?.unreadCount || 0) + newMessagesCount;
@@ -705,9 +705,9 @@ const App: React.FC = () => {
     const currentUnreadCount = convData?.unreadCount || 0;
     const lastReadTime = convData?.lastReadTime || 0;
     
-    // Only increment if user hasn't opened conversation recently (30-second window)
+    // Only increment if user hasn't opened conversation recently (3-second window)
     const timeSinceLastRead = Date.now() - lastReadTime;
-    const shouldIncrement = timeSinceLastRead > 30000; // 30 seconds
+    const shouldIncrement = timeSinceLastRead > 3000; // 3 seconds
     
     const newUnreadCount = shouldIncrement ? currentUnreadCount + 1 : currentUnreadCount;
     
