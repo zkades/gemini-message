@@ -406,18 +406,32 @@ const App: React.FC = () => {
         const avatarSeed = isCbeSms ? 'CBE' : contactMatch?.name || representative.phone;
         const avatarColor = isCbeSms ? '#FF6B35' : contactMatch?.color || pickPaletteColor(avatarSeed);
 
-        // Perfect unread logic like real message apps
+        // Phase 2: Smart Initial Import - only count NEW messages since app install
         const conversationExists = existing && existing.id;
         const lastImportTime = existing?.lastImportTime || 0;
         
-        // For new conversations: count ALL received messages
-        // For existing conversations: count only NEW messages since last import
+        // Get app install time to determine which messages are actually new
+        const appInstallTime = await Preferences.get({ key: 'app_install_time' });
+        const installTime = parseInt(appInstallTime.value || '0') || Date.now();
+        
+        // Save app install time if not set
+        if (!appInstallTime.value) {
+          await Preferences.set({ 
+            key: 'app_install_time', 
+            value: Date.now().toString() 
+          });
+        }
+        
+        // Only count messages received after app install as unread
+        const newMessagesCount = smsList.filter(sms => 
+          sms.type === 'received' && 
+          new Date(sms.timestamp).getTime() > installTime
+        ).length;
+        
+        // Smart unread counting: only NEW messages count as unread
         const unreadCount = conversationExists 
-          ? (existing?.unreadCount || 0) + smsList.filter(sms => 
-              sms.type === 'received' && 
-              new Date(sms.timestamp).getTime() > lastImportTime
-            ).length
-          : smsList.filter(sms => sms.type === 'received').length;
+          ? (existing?.unreadCount || 0) + newMessagesCount
+          : newMessagesCount;
 
         await setDoc(convRef, {
           id: convId,
@@ -651,16 +665,25 @@ const App: React.FC = () => {
     
     await setDoc(doc(msgsRef, msgId), message);
     
-    // Get current CBE conversation to increment unread count properly (same as Gemini)
+    // Phase 4: Smart New Message Handling with 5-minute window
     const convDoc = await getDoc(convRef);
-    const currentUnreadCount = convDoc.exists() ? convDoc.data()?.unreadCount || 0 : 0;
-    const newUnreadCount = currentUnreadCount + 1;
+    const convData = convDoc.exists() ? convDoc.data() as any : {};
+    const currentUnreadCount = convData?.unreadCount || 0;
+    const lastReadTime = convData?.lastReadTime || 0;
     
+    // Only increment if user hasn't opened conversation recently (5-minute window)
+    const timeSinceLastRead = Date.now() - lastReadTime;
+    const shouldIncrement = timeSinceLastRead > 300000; // 5 minutes
+    
+    const newUnreadCount = shouldIncrement ? currentUnreadCount + 1 : currentUnreadCount;
+    
+    console.log('CBE message - Time since last read:', timeSinceLastRead, 'Should increment:', shouldIncrement);
     console.log('Updating CBE unread count from', currentUnreadCount, 'to', newUnreadCount);
+    
     await updateDoc(convRef, {
+      unreadCount: newUnreadCount,
       lastMessage: `ETB ${cbeMessage.amount}`,
-      lastMessageTime: new Date(cbeMessage.timestamp),
-      unreadCount: newUnreadCount
+      lastMessageTime: new Date(cbeMessage.timestamp)
     });
     
     console.log('CBE message saved to conversation:', cbeMessage.text);
@@ -745,13 +768,39 @@ const App: React.FC = () => {
     setView('chat');
     
     if (db) {
+      // Phase 3: Proper Read Tracking - mark all messages as read
       const convRef = doc(db, 'users', user.uid, 'conversations', id);
-      updateDoc(convRef, { 
-        unreadCount: 0,
-        lastImportTime: Date.now()
-      }).catch((e: any) => {
-        console.warn("Error updating unread count:", e);
-      });
+      const msgsRef = collection(db, 'users', user.uid, 'conversations', id, 'messages');
+      
+      try {
+        // Get all messages in this conversation
+        const messagesSnapshot = await getDocs(msgsRef);
+        
+        // Mark all delivered messages as read
+        for (const docSnap of messagesSnapshot.docs) {
+          const messageData = docSnap.data() as any;
+          if (messageData.status === 'delivered') {
+            const messageRef = doc(db, 'users', user.uid, 'conversations', id, 'messages', docSnap.id);
+            await updateDoc(messageRef, { status: 'read' });
+          }
+        }
+        
+        // Reset conversation state
+        await updateDoc(convRef, { 
+          unreadCount: 0,
+          lastReadTime: Date.now(),
+          lastImportTime: Date.now()
+        });
+      } catch (e: any) {
+        console.warn("Error updating read status:", e);
+        // Fallback: just reset unread count
+        updateDoc(convRef, { 
+          unreadCount: 0,
+          lastReadTime: Date.now()
+        }).catch((err: any) => {
+          console.warn("Error updating unread count:", err);
+        });
+      }
     }
   };
 

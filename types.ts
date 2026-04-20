@@ -23,6 +23,7 @@ export interface Conversation {
   isSpam?: boolean;
   isPinned?: boolean;
   lastImportTime?: number;
+  lastReadTime?: number;
 }
 
 export interface Contact {
